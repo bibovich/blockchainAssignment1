@@ -180,42 +180,130 @@ A class representing a Merkle Tree. It takes a list of transactions as input dur
 
 ### build_tree() 
 Builds the Merkle Tree using SHA-256 hash functions.
+```python
+def build_tree(self):
+    tree = [hashlib.sha256(str(transaction).encode()).hexdigest() for transaction in self.transactions]
+    while len(tree) > 1:
+        tree = [hashlib.sha256((tree[i] + tree[i + 1]).encode()).hexdigest() for i in range(0, len(tree), 2)]
+    return tree
+```
 ### get_merkle_root()
 Returns the root of the Merkle Tree.
+```python
+def get_merkle_root(self):
+    return self.tree[0] if self.tree else None
+```
 
 ## Blockchain
 A class representing a simple blockchain.
 
 ### add_participant(participant) 
 Adds a participant to the set of participants.
+```python
+def add_participant(self, participant):
+    self.participants.add(participant)
+```
+
 ### generate_genesis_block() 
 Generates the genesis block with predefined transactions and miners' keys.
+```python
+def generate_genesis_block(self):
+    if len(self.participants) < 2:
+        raise Exception("Need at least two participants to start the blockchain")
+```
+
 ### add_block(transactions) 
 Adds a new block to the blockchain with the provided transactions.
+```python
+def add_block(self, transactions):
+    if not transactions:
+        return
+
+    # Error handling
+    if not all(participant in self.participants for transaction in transactions for participant in
+               transaction.participants):
+        raise Exception("Invalid participant in the transaction")
+
+    # Create a new block
+    block = Block(transactions=transactions, previous_hash=self.chain[-1].hash)
+
+    # Mine the block
+    block.mine_block()
+
+    # Add the block to the chain
+    self.chain.append(block)
+```
 ### print_chain() 
 Prints the entire blockchain.
+```python
+def print_chain(self):
+    for block in self.chain:
+        print(f"Block Hash: {block.hash}")
+        print("Transactions:")
+        for transaction in block.transactions:
+            print(f"\t{transaction}")
+        print("\n")
+```
 
 ## Block
 A class representing a block in the blockchain.
 
 ### mine_block() 
 Mines the block using proof of work with a Merkle Tree.
+```python
+def mine_block(self):
+    # Proof of Work using Merkle Tree
+    while True:
+        self.nonce = random.getrandbits(32)
+        block_data = f"{self.merkle_tree.get_merkle_root()}{self.previous_hash}{self.nonce}"
+        self.hash = hashlib.sha256(block_data.encode()).hexdigest()
+        if self.hash.startswith("0000"):  # Criteria for mining the block
+            break
+```
 ### add_transaction(transaction) 
 Adds a transaction to the block.
+```python
+def add_transaction(self, transaction):
+    self.transactions.append(transaction)
+```
 ### __str__() 
 Returns a string representation of the block.
+```python
+def __str__(self):
+    return f"Block - Hash: {self.hash}, Previous Hash: {self.previous_hash}"
+```
 
 ## Transactions
 A class representing a transaction in the blockchain.
 
 ### __str__()
 Returns a string representation of the transaction.
+```python
+def __str__(self):
+    return f"{self.sender} ({self.role}) sent {self.amount} to {self.recipient} ({self.role})"
+```
 
 ## Miner
 A class representing a miner in the blockchain.
 
 ### mine_block(blockchain)
 Mines a new block and adds it to the blockchain with a mining reward.
+```python
+def mine_block(self, blockchain):
+    # Create a mining transaction (reward) to the miner
+    mining_reward = 10
+    mining_keys = generate_keys()
+    mining_transaction = Transaction(sender="System", recipient=self.name, amount=mining_reward, keys=mining_keys,
+                                     role="miner")
+
+    # Add the mining transaction to a new block
+    new_block = Block(transactions=[mining_transaction], previous_hash=blockchain.chain[-1].hash)
+    new_block.mine_block()
+
+    # Add the new block to the blockchain
+    blockchain.chain.append(new_block)
+    print(f"{self.name} mined a new block! Reward: {mining_reward}")
+```
 
 
 # User Interaction
