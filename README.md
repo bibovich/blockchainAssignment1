@@ -16,7 +16,7 @@ import hashlib
 
 # Project Explanation
 
-# Functions
+## Functions
 
 ## Assymetric Functions
 
