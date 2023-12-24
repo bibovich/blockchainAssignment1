@@ -1,6 +1,5 @@
 import random
 import hashlib
-from functools import reduce
 
 
 # Assymetric encryption implementation:
